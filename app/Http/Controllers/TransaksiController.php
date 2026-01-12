@@ -84,6 +84,12 @@ class TransaksiController extends Controller
         return redirect()->back();
     }
 
+    public function cetakStruk($id) 
+    {
+        $transaksi = \App\Models\Transaksi::with(['user', 'details.produk'])->findOrFail($id);
+        return view('transaksi.struk', compact('transaksi'));
+    }
+
     // 5. Simpan Transaksi (Checkout) dengan Pengurangan Stok
     public function store(Request $request)
     {

@@ -6,29 +6,7 @@
     <style>
         body {
             font-family: sans-serif;
-            font-size: 12px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        table,
-        th,
-        td {
-            border: 1px solid #333;
-        }
-
-        th,
-        td {
-            padding: 5px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #eee;
+            font-size: 10pt;
         }
 
         .header {
@@ -36,71 +14,106 @@
             margin-bottom: 20px;
         }
 
+        .header h2 {
+            margin: 0;
+        }
+
+        .header p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
         .text-right {
             text-align: right;
         }
 
-        .total-row {
+        .total-box {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .total-box span {
             font-weight: bold;
-            background-color: #f2f2f2;
+            font-size: 12pt;
         }
     </style>
 </head>
 
 <body>
+
     <div class="header">
-        <h2>Laporan Penjualan</h2>
-        <p>Periode: {{ $startDate ?? 'Semua' }} s/d {{ $endDate ?? 'Semua' }}</p>
+        <h2>{{ config('app.name', 'POS Ayam') }}</h2>
+        <p>Laporan Penjualan</p>
+        <p>
+            Periode:
+            {{ $startDate ? date('d-m-Y', strtotime($startDate)) : 'Awal' }} s/d
+            {{ $endDate ? date('d-m-Y', strtotime($endDate)) : 'Hari Ini' }}
+        </p>
     </div>
 
-    <h3>Rincian Menu Terjual</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Nama Produk</th>
-                <th style="text-align: center;">Jumlah Terjual</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($terjualPerItem as $item)
-                <tr>
-                    <td>{{ $item->produk->nama_produk ?? 'Produk (Data Terhapus)' }}</td>
-                    <td style="text-align: center;">{{ $item->total_qty }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="2" style="text-align: center;">Tidak ada penjualan item.</td>
-                </tr>
-            @endforelse
-        </tbody>
+    <table style="width: 100%; margin-bottom: 20px; border: none;">
+        <tr style="border: none;">
+            <td style="border: none; background: #eef2f7; padding: 15px;">
+                <strong>Total Omzet</strong><br>
+                <span style="font-size: 14pt;">Rp {{ number_format($total_omzet, 0, ',', '.') }}</span>
+            </td>
+            <td style="border: none; background: #eef2f7; padding: 15px;">
+                <strong>Total Transaksi</strong><br>
+                <span style="font-size: 14pt;">{{ $total_transaksi }}</span>
+            </td>
+        </tr>
     </table>
 
-    <h3>Riwayat Transaksi</h3>
+    <h3>Detail Transaksi</h3>
     <table>
         <thead>
             <tr>
-                <th style="width: 5%;">No</th>
-                <th>Waktu</th>
-                <th>Kasir / Cabang</th>
-                <th>Total</th>
+                <th>No</th>
+                <th>Tanggal & Jam</th>
+                <th>Kasir</th>
+                <th>Item</th>
+                <th class="text-right">Total</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($transaksis as $transaksi)
+            @foreach ($transaksis as $index => $trx)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ $transaksi->created_at->format('d/m/Y H:i') }}</td>
-                    <td>{{ $transaksi->user->name ?? '-' }}</td>
-                    <td class="text-right">Rp {{ number_format($transaksi->total_belanja, 0, ',', '.') }}</td>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ $trx->created_at->format('d/m/Y H:i') }}</td>
+                    <td>{{ $trx->user->name ?? '-' }}</td>
+                    <td>
+                        {{-- Loop detail item biar ketahuan beli apa aja --}}
+                        @foreach ($trx->details as $detail)
+                            <small>{{ $detail->produk->nama ?? 'X' }} ({{ $detail->jumlah }}), </small>
+                        @endforeach
+                    </td>
+                    <td class="text-right">Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
-
-            <tr class="total-row">
-                <td colspan="3" class="text-right">Grand Total Omzet</td>
-                <td class="text-right">Rp {{ number_format($total_omzet, 0, ',', '.') }}</td>
-            </tr>
         </tbody>
     </table>
+
+    <div class="total-box">
+        <p>Dicetak pada: {{ date('d-m-Y H:i') }}</p>
+    </div>
+
 </body>
 
 </html>

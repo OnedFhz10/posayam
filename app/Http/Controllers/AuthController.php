@@ -7,39 +7,44 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    // 1. Tampilkan Form Login
-    public function index()
+    // 1. Tampilkan Halaman Login
+    public function showLoginForm()
     {
+        // Jika sudah login, langsung lempar ke halaman yang sesuai
+        if (Auth::check()) {
+            return $this->redirectBasedOnRole();
+        }
+        
         return view('auth.login');
     }
 
     // 2. Proses Login
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
+        // Validasi Input
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'password.required' => 'Password wajib diisi.',
         ]);
 
-        if (Auth::attempt($request->only('email', 'password'))) {
+        // Coba Login
+        if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
-
-            // LOGIKA SISTEMATIS: Arahkan sesuai peran
-            $role = Auth::user()->role;
             
-            if ($role == 'kasir') {
-                // Kasir langsung ke Mesin Kasir
-                return redirect()->route('transaksi.index');
-            } else {
-                // Admin ke Dashboard/Laporan
-                return redirect()->route('dashboard');
-            }
+            // Login Sukses -> Cek Role
+            return $this->redirectBasedOnRole();
         }
 
+        // Login Gagal
         return back()->withErrors([
             'email' => 'Email atau password salah.',
-        ]);
+        ])->onlyInput('email');
     }
+
     // 3. Proses Logout
     public function logout(Request $request)
     {
@@ -48,5 +53,18 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/login');
+    }
+
+    // --- Helper: Redirect Sesuai Role ---
+    protected function redirectBasedOnRole()
+    {
+        $role = Auth::user()->role;
+
+        if ($role === 'admin') {
+            return redirect()->route('dashboard');
+        } 
+        
+        // Default untuk kasir / staff
+        return redirect()->route('transaksi.index');
     }
 }

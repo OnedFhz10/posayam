@@ -6,6 +6,7 @@ use App\Models\Transaksi;
 use App\Models\TransaksiDetail; // Pastikan model ini ada
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Produk;
 use PDF; // Import PDF
 
 class LaporanController extends Controller
@@ -20,14 +21,43 @@ class LaporanController extends Controller
 
     public function exportPdf(Request $request)
     {
-        // 1. Ambil Data yang sama dengan filter saat ini
+        // 1. VALIDASI WAJIB: Harus ada tanggal
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+        ], [
+            'start_date.required' => 'Silakan pilih Tanggal Awal dulu untuk mencetak PDF.',
+            'end_date.required'   => 'Silakan pilih Tanggal Akhir dulu untuk mencetak PDF.',
+            'end_date.after_or_equal' => 'Tanggal Akhir tidak boleh kurang dari Tanggal Awal.'
+        ]);
+
+        // 2. Ambil Data
         $data = $this->getFilteredData($request);
 
-        // 2. Load View khusus PDF
+        // 3. Load View & Download
         $pdf = PDF::loadView('laporan.pdf', $data);
+        return $pdf->download('laporan-transaksi-' . date('YmdHis') . '.pdf');
+    }
 
-        // 3. Download file
-        return $pdf->download('laporan-transaksi.pdf');
+    public function destroy($id)
+    {
+        // 1. Cari Transaksi berdasarkan ID
+        $transaksi = Transaksi::with('details')->findOrFail($id);
+
+        // 2. Kembalikan Stok Produk (Looping setiap item yang dibeli)
+        foreach ($transaksi->details as $detail) {
+            $produk = Produk::find($detail->produk_id);
+            if ($produk) {
+                $produk->increment('stok', $detail->jumlah);
+            }
+            // Hapus detailnya
+            $detail->delete();
+        }
+
+        // 3. Hapus Transaksi Utama
+        $transaksi->delete();
+
+        return redirect()->back()->with('success', 'Laporan transaksi berhasil dihapus dan stok telah dikembalikan.');
     }
 
     // --- FUNGSI PRIVAT UNTUK FILTER (Agar tidak tulis ulang kode) ---
