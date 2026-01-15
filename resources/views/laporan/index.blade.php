@@ -1,281 +1,398 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- Font & Animate.css (Opsional jika belum ada di layout) --}}
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-
     <style>
-        /* GLOBAL STYLE */
-        body {
-            background-color: #f4f7fc;
-            font-family: 'Poppins', sans-serif;
-            color: #495057;
+        /* === TEAL THEME VARIABLES === */
+        :root {
+            --teal-primary: #1abc9c;
+            --teal-dark: #16a085;
+            --bg-light: #e3f2fd;
         }
 
-        /* CARD MODERN */
-        .card-modern {
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Header Sticky */
+        .header-sticky {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            background-color: var(--bg-light);
+            backdrop-filter: blur(5px);
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+
+        /* Kartu Ringkasan */
+        .summary-card {
             border: none;
             border-radius: 20px;
-            background: #ffffff;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
-            margin-bottom: 20px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* INPUT FILTER STYLE */
-        .form-control-modern {
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            background-color: #f8fafc;
-            padding: 12px 15px;
-            font-size: 0.9rem;
-            color: #2d3748;
-            transition: all 0.2s;
-        }
-
-        .form-control-modern:focus {
-            background-color: #fff;
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-label-modern {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #a0aec0;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* TOMBOL GRADASI */
-        .btn-modern {
-            border-radius: 12px;
-            padding: 12px 20px;
-            font-weight: 600;
-            border: none;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            padding: 20px;
             transition: transform 0.2s;
-        }
-
-        .btn-modern:active {
-            transform: scale(0.96);
-        }
-
-        .btn-gradient-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 10px rgba(118, 75, 162, 0.3);
-        }
-
-        .btn-gradient-danger {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
-            color: white;
-            box-shadow: 0 4px 10px rgba(238, 82, 83, 0.3);
-        }
-
-        /* CARD OMZET (Gradient Biru) */
-        .bg-gradient-info {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white !important;
-        }
-
-        /* STYLE KHUSUS LIST TRANSAKSI (Mobile Friendly) */
-        .transaction-list-item {
-            padding: 15px;
-            border-bottom: 1px dashed #e2e8f0;
+            height: 100%;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            transition: background 0.2s;
         }
 
-        .transaction-list-item:last-child {
-            border-bottom: none;
+        .summary-card:hover {
+            transform: translateY(-3px);
         }
 
-        .transaction-list-item:hover {
-            background-color: #f8fafc;
+        .summary-teal {
+            background: linear-gradient(135deg, var(--teal-primary) 0%, var(--teal-dark) 100%);
+            color: white;
         }
 
-        .trx-icon {
-            width: 45px;
-            height: 45px;
-            background: #f3f4f6;
-            color: #667eea;
-            border-radius: 12px;
+        .summary-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             margin-right: 15px;
         }
 
-        /* Tombol Hapus Kecil */
-        .btn-delete-mini {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: #fff5f5;
-            color: #e53e3e;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            transition: all 0.2s;
+        .icon-white-bg {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
         }
 
-        .btn-delete-mini:hover {
-            background: #e53e3e;
+        .icon-teal-bg {
+            background: #e0f2f1;
+            color: var(--teal-dark);
+        }
+
+        /* Input Date Modern */
+        .form-control-pill {
+            border-radius: 50px;
+            border: none;
+            padding: 10px 20px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            color: #555;
+        }
+
+        .form-control-pill:focus {
+            outline: 2px solid var(--teal-primary);
+            box-shadow: 0 4px 15px rgba(26, 188, 156, 0.2);
+        }
+
+        .btn-filter {
+            border-radius: 50px;
+            background: var(--teal-dark);
             color: white;
+            border: none;
+            padding: 10px 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(22, 160, 133, 0.3);
+            transition: 0.2s;
+        }
+
+        .btn-filter:hover {
+            background: #149174;
+            transform: translateY(-2px);
+        }
+
+        /* Tabel & List Style */
+        .custom-table thead th {
+            background-color: #e0f2f1;
+            color: var(--teal-dark);
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+        }
+
+        .custom-table tbody td {
+            background: white;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 15px;
+            vertical-align: middle;
+        }
+
+        .custom-table tbody tr:first-child td:first-child {
+            border-top-left-radius: 15px;
+        }
+
+        .custom-table tbody tr:first-child td:last-child {
+            border-top-right-radius: 15px;
+        }
+
+        .custom-table tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 15px;
+        }
+
+        .custom-table tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 15px;
+        }
+
+        /* Mobile Transaction Card */
+        .trx-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid var(--teal-primary);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .trx-card:active {
+            transform: scale(0.98);
+            background: #f8f9fa;
         }
     </style>
 
-    <div class="container-fluid pb-5 px-3 pt-2">
+    <div class="container-fluid px-4">
 
-        {{-- ALERT SUKSES (Floating) --}}
-        @if (session('success'))
-            <div class="alert alert-success border-0 shadow-sm rounded-3 mb-3 animate__animated animate__fadeInDown">
-                <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+        {{-- 1. HEADER & FILTER --}}
+        <div class="header-sticky">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">Laporan Penjualan</h4>
+                    <small class="text-muted">Pantau performa bisnis anda</small>
+                </div>
+                {{-- Tombol Print (Optional) --}}
+                <button class="btn btn-sm btn-light rounded-circle shadow-sm text-secondary d-none d-md-block"
+                    onclick="window.print()">
+                    <i class="fas fa-print"></i>
+                </button>
             </div>
-        @endif
 
-        {{-- JUDUL HALAMAN --}}
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div>
-                <h4 class="font-weight-bold text-dark mb-0">Laporan</h4>
-                <p class="text-muted small mb-0">Ringkasan penjualan</p>
-            </div>
-            {{-- Tombol Filter Mobile --}}
-            <button class="btn btn-white shadow-sm rounded-circle text-primary" type="button" data-toggle="collapse"
-                data-target="#collapseFilter" style="width: 40px; height: 40px;">
-                <i class="fas fa-filter"></i>
-            </button>
+            {{-- Form Filter Tanggal --}}
+            <form action="{{ route('laporan.index') }}" method="GET" class="row g-2 align-items-center mb-2">
+                <div class="col-6 col-md-4">
+                    <input type="date" name="start_date" class="form-control form-control-pill"
+                        value="{{ request('start_date', date('Y-m-01')) }}">
+                </div>
+                <div class="col-6 col-md-4">
+                    <input type="date" name="end_date" class="form-control form-control-pill"
+                        value="{{ request('end_date', date('Y-m-d')) }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-filter w-100">
+                        <i class="fas fa-filter me-2"></i> Filter
+                    </button>
+                </div>
+            </form>
         </div>
 
-        {{-- FILTER SECTION (Collapsible) --}}
-        <div class="collapse mb-3" id="collapseFilter">
-            <div class="card-modern p-3">
-                <form action="{{ route('laporan.index') }}" method="GET">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="form-label-modern">Dari</label>
-                            <input type="date" name="start_date" class="form-control-modern" value="{{ $startDate }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label-modern">Sampai</label>
-                            <input type="date" name="end_date" class="form-control-modern" value="{{ $endDate }}">
-                        </div>
-                        <div class="col-12 mt-3 d-flex gap-2">
-                            <button type="submit" class="btn btn-modern btn-gradient-primary w-100">
-                                Filter
-                            </button>
-                            <a href="{{ route('laporan.export_pdf', request()->all()) }}"
-                                class="btn btn-modern btn-gradient-danger w-100">
-                                PDF
-                            </a>
-                        </div>
+        {{-- 2. RINGKASAN --}}
+        <div class="row g-3 mb-4">
+            {{-- Total Omzet --}}
+            <div class="col-12 col-md-6">
+                <div class="summary-card summary-teal">
+                    <div class="summary-icon icon-white-bg">
+                        <i class="fas fa-wallet"></i>
                     </div>
-                </form>
-            </div>
-        </div>
-
-        {{-- KARTU OMZET & STATISTIK --}}
-        <div class="row g-3 mb-3">
-            {{-- Kartu Omzet --}}
-            <div class="col-12 col-md-5">
-                <div class="card-modern bg-gradient-info p-4 text-white position-relative">
-                    <i class="fas fa-coins position-absolute"
-                        style="right: -10px; top: -10px; font-size: 6rem; opacity: 0.1;"></i>
-                    <p class="mb-1 small text-uppercase" style="opacity: 0.8; letter-spacing: 1px;">Omzet Penjualan</p>
-                    <h2 class="font-weight-bold mb-0">Rp {{ number_format($total_omzet, 0, ',', '.') }}</h2>
-                    <div class="mt-2 badge bg-white bg-opacity-25 fw-normal px-2 rounded-pill">
-                        {{ $total_transaksi }} Transaksi Berhasil
+                    <div>
+                        <small class="opacity-75 fw-bold">TOTAL OMZET (PERIODE INI)</small>
+                        <h3 class="fw-bold mb-0">Rp {{ number_format($total_omzet ?? 0, 0, ',', '.') }}</h3>
                     </div>
                 </div>
             </div>
 
-            {{-- Kartu Menu Terlaris (List Compact) --}}
-            <div class="col-12 col-md-7">
-                <div class="card-modern h-100">
-                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                        <h6 class="font-weight-bold m-0 text-dark"><i class="fas fa-trophy text-warning mr-2"></i>Top Menu
-                        </h6>
+            {{-- Total Transaksi --}}
+            <div class="col-12 col-md-6">
+                <div class="summary-card">
+                    <div class="summary-icon icon-teal-bg">
+                        <i class="fas fa-receipt"></i>
                     </div>
-                    <div class="p-2">
-                        @forelse($terjualPerItem->take(3) as $index => $item)
-                            <div class="d-flex align-items-center p-2 rounded hover-bg-light">
-                                <div class="font-weight-bold text-muted text-center" style="width: 25px;">
-                                    {{ $index + 1 }}</div>
-                                <div class="flex-grow-1 mx-2">
-                                    <div class="font-weight-bold text-dark small text-truncate">
-                                        {{ $item->produk->nama ?? 'Dihapus' }}</div>
-                                    <div class="progress" style="height: 4px; width: 80%;">
-                                        <div class="progress-bar bg-primary"
-                                            style="width: {{ ($item->total_qty / ($terjualPerItem->max('total_qty') ?: 1)) * 100 }}%">
+                    <div>
+                        <small class="text-muted fw-bold">TOTAL TRANSAKSI</small>
+                        <h3 class="fw-bold text-dark mb-0">{{ $total_transaksi ?? 0 }} Transaksi</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- 2.5. MENU TERLARIS (BARU: SUDAH MENGGUNAKAN LOGIKA BREAKDOWN) --}}
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+            <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                <h5 class="fw-bold text-dark mb-0">
+                    <i class="fas fa-crown text-warning me-2"></i>Menu Terlaris
+                </h5>
+                <small class="text-muted">Rincian produk (termasuk isi paket) yang terjual</small>
+            </div>
+            <div class="card-body p-4">
+
+                {{-- Tampilan Tabel (Desktop) --}}
+                <div class="table-responsive d-none d-md-block">
+                    <table class="table table-borderless align-middle">
+                        <thead class="text-secondary small border-bottom">
+                            <tr>
+                                <th width="5%">RANK</th>
+                                <th width="40%">NAMA MENU</th>
+                                <th width="15%">KATEGORI</th>
+                                <th width="20%">TERJUAL</th>
+                                <th width="20%" class="text-end">PENDAPATAN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($produk_terjual as $index => $item)
+                                <tr>
+                                    <td class="fw-bold text-center">
+                                        @if ($index == 0)
+                                            🥇
+                                        @elseif($index == 1)
+                                            🥈
+                                        @elseif($index == 2)
+                                            🥉
+                                        @else
+                                            {{ $index + 1 }}
+                                        @endif
+                                    </td>
+                                    <td class="fw-bold text-dark">{{ $item->nama }}</td>
+                                    <td>
+                                        <span
+                                            class="badge bg-light text-secondary border rounded-pill px-3">{{ $item->kategori }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="fw-bold me-2">{{ $item->total_qty }}</span>
+                                            {{-- Progress Bar Visual --}}
+                                            <div class="progress flex-grow-1" style="height: 6px; max-width: 100px;">
+                                                <div class="progress-bar" role="progressbar"
+                                                    style="width: {{ ($item->total_qty / ($produk_terjual->max('total_qty') > 0 ? $produk_terjual->max('total_qty') : 1)) * 100 }}%; background-color: var(--teal-primary);">
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <span class="badge bg-light text-primary border">{{ $item->total_qty }}</span>
-                            </div>
-                        @empty
-                            <p class="text-center text-muted small py-3">Belum ada data.</p>
-                        @endforelse
-                    </div>
+                                    </td>
+                                    <td class="text-end fw-bold text-dark">Rp
+                                        {{ number_format($item->total_pendapatan, 0, ',', '.') }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">Belum ada data penjualan produk.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
+
+                {{-- Tampilan List (Mobile) --}}
+                <div class="d-md-none">
+                    @forelse($produk_terjual as $index => $item)
+                        <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 fw-bold text-secondary" style="width: 20px;">#{{ $index + 1 }}</div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark">{{ $item->nama }}</h6>
+                                    <small class="text-muted">{{ $item->kategori }}</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="d-block fw-bold fs-5 text-dark"
+                                    style="color: var(--teal-dark) !important;">{{ $item->total_qty }} <small
+                                        class="fs-6 text-muted">Pcs</small></span>
+                                <small class="text-muted" style="font-size: 0.75rem;">Rp
+                                    {{ number_format($item->total_pendapatan, 0, ',', '.') }}</small>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted py-4">Belum ada data penjualan.</div>
+                    @endforelse
+                </div>
+
+            </div>
+        </div>
+        {{-- 3. DAFTAR TRANSAKSI (DENGAN TOMBOL HAPUS) --}}
+
+        {{-- Tampilan Desktop (Tabel) --}}
+        <div class="d-none d-md-block mb-5">
+            <div class="table-responsive">
+                <table class="table custom-table table-borderless">
+                    <thead>
+                        <tr>
+                            <th>No. Transaksi</th>
+                            <th>Waktu</th>
+                            <th>Kasir</th>
+                            <th>Total</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($transaksis as $trx)
+                            <tr>
+                                <td class="fw-bold text-secondary">{{ $trx->nomor_transaksi }}</td>
+                                <td>{{ $trx->created_at->format('d M Y, H:i') }}</td>
+                                <td>{{ $trx->user->name ?? 'Kasir' }}</td>
+                                <td class="fw-bold text-dark">Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}</td>
+                                <td>
+                                    {{-- UPDATE: TOMBOL AKSI LENGKAP --}}
+                                    <div class="d-flex gap-1">
+                                        {{-- Tombol Detail --}}
+                                        <button
+                                            class="btn btn-sm btn-light rounded-pill text-primary fw-bold px-3 shadow-sm"
+                                            data-bs-toggle="modal" data-bs-target="#modalDetail{{ $trx->id }}">
+                                            Detail
+                                        </button>
+
+                                        {{-- Tombol Hapus (Form) --}}
+                                        <form action="{{ route('laporan.destroy', $trx->id) }}" method="POST"
+                                            onsubmit="return confirm('HAPUS TRANSAKSI INI?\n\nStok produk akan dikembalikan otomatis.\nData yang dihapus tidak bisa dikembalikan.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="btn btn-sm btn-light rounded-circle text-danger shadow-sm"
+                                                title="Hapus Laporan">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            {{-- Modal Detail (Include di dalam loop) --}}
+                            @include('laporan.modal_detail', ['trx' => $trx])
+
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fas fa-search fa-2x mb-3 opacity-25"></i>
+                                    <p>Tidak ada transaksi pada periode ini.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        {{-- RIWAYAT TRANSAKSI (LIST VIEW - BUKAN TABEL) --}}
-        <div class="card-modern">
-            <div class="p-3 border-bottom bg-white sticky-top" style="top: 0; z-index: 10;">
-                <h6 class="font-weight-bold m-0 text-dark"><i class="fas fa-history text-secondary mr-2"></i>Riwayat
-                    Transaksi</h6>
-            </div>
-
-            <div class="transaction-list">
-                @forelse ($transaksis as $transaksi)
-                    <div class="transaction-list-item">
-                        {{-- Kiri: Icon & Info --}}
-                        <div class="d-flex align-items-center overflow-hidden">
-                            <div class="trx-icon flex-shrink-0">
-                                <i class="fas fa-receipt"></i>
-                            </div>
-                            <div style="min-width: 0;">
-                                <h6 class="mb-0 font-weight-bold text-dark text-truncate">Rp
-                                    {{ number_format($transaksi->total_belanja, 0, ',', '.') }}</h6>
-                                <div class="small text-muted text-truncate">
-                                    <i class="far fa-clock mr-1"></i> {{ $transaksi->created_at->format('H:i') }}
-                                    <span class="mx-1">•</span>
-                                    <i class="far fa-user mr-1"></i> {{ explode(' ', $transaksi->user->name)[0] }}
-                                </div>
-                                <div class="small text-muted" style="font-size: 0.65rem;">
-                                    {{ $transaksi->created_at->format('d M Y') }}
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Kanan: Tombol Hapus --}}
-                        <div class="ml-2">
-                            <form onsubmit="return confirm('Hapus transaksi ini? Stok akan dikembalikan.');"
-                                action="{{ route('laporan.destroy', $transaksi->id) }}" method="POST">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-delete-mini shadow-sm">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </form>
-                        </div>
+        {{-- Tampilan Mobile (List Card) --}}
+        <div class="d-md-none pb-5">
+            <h6 class="fw-bold text-muted mb-3">Riwayat Transaksi</h6>
+            @forelse($transaksis as $trx)
+                <div class="trx-card" data-bs-toggle="modal" data-bs-target="#modalDetail{{ $trx->id }}">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0">Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}</h6>
+                        <small class="text-muted">{{ $trx->nomor_transaksi }} •
+                            {{ $trx->created_at->format('H:i') }}</small>
                     </div>
-                @empty
-                    <div class="text-center py-5">
-                        <i class="fas fa-file-invoice fa-3x text-muted opacity-25 mb-3"></i>
-                        <p class="text-muted small">Belum ada transaksi pada periode ini.</p>
+                    <div class="text-secondary">
+                        <i class="fas fa-chevron-right"></i>
                     </div>
-                @endforelse
-            </div>
+                </div>
+
+                {{-- Modal Detail Mobile (Include) --}}
+                @include('laporan.modal_detail', ['trx' => $trx])
+
+            @empty
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-folder-open fa-3x mb-3 opacity-25"></i>
+                    <p>Belum ada data.</p>
+                </div>
+            @endforelse
         </div>
 
     </div>

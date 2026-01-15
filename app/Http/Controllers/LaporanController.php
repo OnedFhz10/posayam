@@ -3,17 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
-use App\Models\TransaksiDetail; // Pastikan model ini ada
+use App\Models\TransaksiDetail;
+use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Produk;
-use PDF; // Import PDF
+use Illuminate\Support\Facades\DB;
+use PDF; 
 
 class LaporanController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Ambil Data (Logika Filter)
+        // 1. Ambil Data (Logika Filter terpusat)
         $data = $this->getFilteredData($request);
 
         return view('laporan.index', $data);
@@ -60,48 +61,133 @@ class LaporanController extends Controller
         return redirect()->back()->with('success', 'Laporan transaksi berhasil dihapus dan stok telah dikembalikan.');
     }
 
-    // --- FUNGSI PRIVAT UNTUK FILTER (Agar tidak tulis ulang kode) ---
+    // --- FUNGSI PRIVAT UNTUK FILTER & LOGIKA PECAH PAKET ---
     private function getFilteredData($request)
     {
         $user = Auth::user();
-        $query = Transaksi::with(['user', 'details.produk']); // Load detail & produk
+        
+        // 1. Query Dasar Transaksi
+        $query = Transaksi::with(['user', 'details.produk']); 
 
-        // Filter Role
         if ($user->role !== 'admin') { 
             $query->where('user_id', $user->id);
         }
 
-        // Filter Tanggal
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('created_at', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59'
-            ]);
-        }
+        $startDate = $request->input('start_date', date('Y-m-01'));
+        $endDate   = $request->input('end_date', date('Y-m-d'));
 
-        // Filter Kode
-        if ($request->filled('kode_transaksi')) {
+        $query->whereBetween('created_at', [
+            $startDate . ' 00:00:00',
+            $endDate . ' 23:59:59'
+        ]);
+
+        if ($request->filled('nomor_transaksi')) {
+            $query->where('nomor_transaksi', 'like', '%' . $request->nomor_transaksi . '%');
+        } elseif ($request->filled('kode_transaksi')) {
             $query->where('kode_transaksi', 'like', '%' . $request->kode_transaksi . '%');
         }
 
         $transaksis = $query->latest()->get();
 
-        // --- LOGIKA HITUNG DETAIL ITEM TERJUAL ---
-        // Ambil semua ID transaksi hasil filter
-        $transaksiIds = $transaksis->pluck('id');
+        // -----------------------------------------------------------
+        // BAGIAN MODIFIKASI: LOGIKA PECAH PAKET (BREAKDOWN)
+        // -----------------------------------------------------------
+        
+        // A. Definisikan Resep Paket Disini (Sesuaikan dengan Nama Menu di Database Anda)
+        // Format: 'Nama Menu Paket' => ['Komponen' => Jumlah, 'Komponen Lain' => Jumlah]
+        $resepPaket = [
+            'Paket Ayam Bakar' => [
+                'Ayam Bakar' => 1, 
+                'Nasi' => 1
+            ],
+            'Paket Ayam Chiken' => [ // Sesuaikan typo jika ada di DB (misal: Chicken/Chiken)
+                'Ayam Chicken' => 1, 
+                'Nasi' => 1
+            ],
+            'Paket Jumbo' => [
+                'Ayam Chicken' => 2, 
+                'Nasi' => 1,
+                'Es Teh Manis' => 1
+            ],
+            // Tambahkan paket lain di sini sesuai nama di Database Anda...
+        ];
 
-        // Query ke tabel detail untuk menjumlahkan per produk
-        $terjualPerItem = TransaksiDetail::whereIn('transaksi_id', $transaksiIds)
-            ->with('produk')
-            ->selectRaw('produk_id, sum(jumlah) as total_qty') // Asumsi kolomnya 'jumlah'
-            ->groupBy('produk_id')
-            ->get();
-        // ------------------------------------------
+        // B. Array penampung hasil akhir laporan item
+        $laporanItem = []; 
 
+        // C. Loop semua transaksi untuk dihitung manual (agar bisa dipecah)
+        foreach ($transaksis as $trx) {
+            foreach ($trx->details as $detail) {
+                // Pastikan produk masih ada (tidak null)
+                if (!$detail->produk) continue;
+
+                $namaProduk = $detail->produk->nama;
+                $qtyBeli = $detail->jumlah;
+                $subtotal = $detail->subtotal;
+                $kategoriAsli = $detail->produk->kategori;
+
+                // Cek apakah produk ini adalah Paket yang terdaftar di resep?
+                if (array_key_exists($namaProduk, $resepPaket)) {
+                    
+                    // --- JIKA PAKET: Pecah isinya ---
+                    $komponen = $resepPaket[$namaProduk];
+                    
+                    // Hitung estimasi pendapatan per komponen (Subtotal dibagi jumlah jenis item)
+                    $jumlahJenisItem = count($komponen);
+                    $pendapatanPerKomponen = $subtotal / ($jumlahJenisItem > 0 ? $jumlahJenisItem : 1);
+
+                    foreach ($komponen as $namaKomponen => $qtyPerPaket) {
+                        // Total qty komponen = Qty Beli Paket * Qty dalam Paket
+                        $totalQtyKomponen = $qtyBeli * $qtyPerPaket;
+                        
+                        // Tentukan kategori komponen secara manual/logika sederhana
+                        $kategoriKomponen = 'Item Pecahan'; // Default
+                        if(str_contains($namaKomponen, 'Ayam')) $kategoriKomponen = 'Ayam';
+                        elseif(str_contains($namaKomponen, 'Nasi')) $kategoriKomponen = 'Topping';
+                        elseif(str_contains($namaKomponen, 'Teh') || str_contains($namaKomponen, 'Minum') || str_contains($namaKomponen, 'Es')) $kategoriKomponen = 'Minuman';
+
+                        // Masukkan ke array laporan
+                        if (!isset($laporanItem[$namaKomponen])) {
+                            $laporanItem[$namaKomponen] = [
+                                'nama' => $namaKomponen,
+                                'kategori' => $kategoriKomponen,
+                                'total_qty' => 0,
+                                'total_pendapatan' => 0
+                            ];
+                        }
+                        $laporanItem[$namaKomponen]['total_qty'] += $totalQtyKomponen;
+                        $laporanItem[$namaKomponen]['total_pendapatan'] += $pendapatanPerKomponen;
+                    }
+
+                } else {
+                    
+                    // --- JIKA BUKAN PAKET (Produk Biasa): Masukkan langsung ---
+                    if (!isset($laporanItem[$namaProduk])) {
+                        $laporanItem[$namaProduk] = [
+                            'nama' => $namaProduk,
+                            'kategori' => $kategoriAsli,
+                            'total_qty' => 0,
+                            'total_pendapatan' => 0
+                        ];
+                    }
+                    $laporanItem[$namaProduk]['total_qty'] += $qtyBeli;
+                    $laporanItem[$namaProduk]['total_pendapatan'] += $subtotal;
+                }
+            }
+        }
+
+        // D. Ubah Array kembali menjadi Collection Object agar view bisa membacanya ($item->nama)
+        // dan Urutkan dari yang terbanyak (Best Seller)
+        $produk_terjual = collect($laporanItem)->map(function($item) {
+            return (object) $item;
+        })
+        ->sortByDesc('total_qty')
+        ->values();
+
+        // -----------------------------------------------------------
+        
         $total_omzet = $transaksis->sum('total_belanja');
         $total_transaksi = $transaksis->count();
-        $startDate = $request->start_date;
-        $endDate = $request->end_date;
 
         return compact(
             'transaksis', 
@@ -109,7 +195,7 @@ class LaporanController extends Controller
             'total_transaksi', 
             'startDate', 
             'endDate',
-            'terjualPerItem' // Kirim data item terjual ke view
+            'produk_terjual' 
         );
     }
 }

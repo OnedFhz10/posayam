@@ -1,164 +1,177 @@
-<!doctype html>
-<html lang="id">
+@extends('layouts.app')
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Login - {{ config('app.name', 'KasirApp') }}</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-
+@section('content')
     <style>
+        /* Reset Body */
         body {
-            background-color: #f4f6f9;
+            background-color: #e3f2fd;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-family: 'Poppins', sans-serif;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        /* Background Atas (Hiasan) */
-        .bg-accent {
-            position: absolute;
-            top: 0;
-            left: 0;
+        /* Kartu Login Utama */
+        .login-container {
             width: 100%;
-            height: 40vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-bottom-left-radius: 40px;
-            border-bottom-right-radius: 40px;
-            z-index: -1;
-        }
-
-        /* Kartu Login */
-        .card-login {
-            border: none;
-            border-radius: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            max-width: 380px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            width: 100%;
-            max-width: 400px;
         }
 
+        /* Bagian Header Hijau */
         .login-header {
-            background: white;
-            padding: 30px 30px 10px 30px;
+            background-color: #1abc9c;
+            /* Warna Teal */
+            padding: 30px 20px;
             text-align: center;
+            color: white;
         }
 
-        .app-icon {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 20px;
+        /* Style Logo Brand */
+        .brand-logo-container {
+            width: 80px;
+            height: 80px;
+            background-color: white;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
             margin: 0 auto 15px auto;
-            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .form-control-lg {
-            background-color: #f8f9fa;
-            border: 2px solid #f1f1f1;
-            font-size: 0.95rem;
-            padding: 25px 20px;
-            border-radius: 15px;
-            transition: all 0.3s;
+        .brand-logo-img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
         }
 
-        .form-control-lg:focus {
-            background-color: #fff;
-            border-color: #764ba2;
-            box-shadow: 0 0 0 4px rgba(118, 75, 162, 0.1);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 15px;
-            border-radius: 15px;
+        .login-header h3 {
+            margin: 0;
             font-weight: 600;
+            font-size: 1.6rem;
             letter-spacing: 0.5px;
-            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
-            transition: transform 0.2s;
         }
 
-        .btn-primary:active {
-            transform: scale(0.98);
+        /* Bagian Form */
+        .login-body {
+            padding: 30px 25px;
+        }
+
+        /* Input Group */
+        .input-group-custom {
+            display: flex;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .input-group-custom:focus-within {
+            border-color: #1abc9c;
+        }
+
+        .input-icon {
+            background-color: #16a085;
+            color: white;
+            width: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .form-control-custom {
+            border: none;
+            padding: 12px 15px;
+            width: 100%;
+            outline: none;
+            font-size: 1rem;
+            color: #555;
+        }
+
+        /* Link Forgot */
+        .forgot-link {
+            display: block;
+            color: #16a085;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Tombol Login */
+        .btn-login {
+            width: 100%;
+            background-color: #16a085;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn-login:hover {
+            background-color: #149174;
         }
     </style>
-</head>
 
-<body>
+    <div class="login-container">
+        {{-- Header dengan Logo --}}
+        <div class="login-header">
 
-    <div class="bg-accent"></div>
-
-    <div class="container px-4">
-        <div class="card card-login mx-auto animate__animated animate__fadeInUp">
-
-            <div class="login-header">
-                <div class="app-icon">
-                    <i class="fas fa-store"></i>
-                </div>
-                <h4 class="font-weight-bold text-dark mb-1">Selamat Datang!</h4>
-                <p class="text-muted small">Silakan login untuk memulai aplikasi.</p>
+            {{-- AREA LOGO BRAND --}}
+            <div class="brand-logo-container">
+                {{-- Ganti src ini dengan logo Anda --}}
+                <img src="https://cdn-icons-png.flaticon.com/512/2921/2921822.png" alt="Logo Brand" class="brand-logo-img">
             </div>
 
-            <div class="card-body p-4 pt-2">
+            <h3>Login Kasir</h3>
+        </div>
 
-                {{-- Error Message --}}
-                @if ($errors->any())
-                    <div class="alert alert-danger border-0 rounded-lg small shadow-sm mb-4">
-                        <i class="fas fa-exclamation-circle mr-1"></i> {{ $errors->first() }}
-                    </div>
+        {{-- Isi Form --}}
+        <div class="login-body">
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+
+                {{-- Email --}}
+                <div class="input-group-custom">
+                    <div class="input-icon"><i class="fas fa-user"></i></div>
+                    <input type="email" name="email" class="form-control-custom" placeholder="Email Address" required
+                        autofocus value="{{ old('email') }}">
+                </div>
+                @error('email')
+                    <small class="text-danger d-block mb-3" style="margin-top:-15px;">{{ $message }}</small>
+                @enderror
+
+                {{-- Password --}}
+                <div class="input-group-custom">
+                    <div class="input-icon"><i class="fas fa-lock"></i></div>
+                    <input type="password" name="password" class="form-control-custom" placeholder="Password" required>
+                </div>
+                @error('password')
+                    <small class="text-danger d-block mb-3" style="margin-top:-15px;">{{ $message }}</small>
+                @enderror
+
+                {{-- Forgot Password (Opsional, akan hilang jika route tidak ada) --}}
+                @if (Route::has('password.request'))
+                    <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
                 @endif
 
-                <form action="{{ route('login') }}" method="POST">
-                    @csrf
+                <button type="submit" class="btn-login">Login</button>
 
-                    <div class="form-group mb-4">
-                        <label class="small font-weight-bold text-muted ml-2 mb-2">EMAIL ADDRESS</label>
-                        <div class="input-group">
-                            <input type="email" name="email" class="form-control form-control-lg"
-                                placeholder="nama@email.com" value="{{ old('email') }}" required autofocus>
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-4">
-                        <label class="small font-weight-bold text-muted ml-2 mb-2">PASSWORD</label>
-                        <div class="input-group">
-                            <input type="password" name="password" class="form-control form-control-lg"
-                                placeholder="••••••••" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group d-flex justify-content-between align-items-center mb-4">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="remember" name="remember">
-                            <label class="custom-control-label small text-muted" for="remember">Ingat Saya</label>
-                        </div>
-                        {{-- <a href="#" class="small text-primary font-weight-bold">Lupa Password?</a> --}}
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-block btn-lg">
-                        MASUK APLIKASI <i class="fas fa-arrow-right ml-2"></i>
-                    </button>
-                </form>
-            </div>
-
-            <div class="text-center pb-4">
-                <small class="text-muted opacity-50">&copy; {{ date('Y') }}
-                    {{ config('app.name', 'KasirApp') }}</small>
-            </div>
+            </form>
         </div>
     </div>
-
-</body>
-
-</html>
+@endsection
