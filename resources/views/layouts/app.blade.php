@@ -202,7 +202,7 @@
             {{-- A. SIDEBAR DESKTOP --}}
             <div class="desktop-sidebar">
                 <div class="sidebar-brand">
-                    <i class="fas fa-chicken"></i> PosAyam
+                    <i class="fas fa-chicken"></i> POS APP
                 </div>
 
                 <div class="sidebar-menu flex-grow-1">

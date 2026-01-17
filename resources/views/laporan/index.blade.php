@@ -161,7 +161,7 @@
                     <h4 class="fw-bold text-dark mb-0">Laporan Penjualan</h4>
                     <small class="text-muted">Pantau performa bisnis anda</small>
                 </div>
-                {{-- Tombol Print (Optional) --}}
+                {{-- Tombol Print Halaman (Optional - Cetak PDF Browser) --}}
                 <button class="btn btn-sm btn-light rounded-circle shadow-sm text-secondary d-none d-md-block"
                     onclick="window.print()">
                     <i class="fas fa-print"></i>
@@ -186,7 +186,7 @@
                     </button>
                 </div>
 
-                {{-- TOMBOL EXPORT PDF (BARU) --}}
+                {{-- TOMBOL EXPORT PDF --}}
                 <div class="col-6 col-md-3">
                     <a href="{{ route('laporan.export_pdf', ['start_date' => request('start_date', date('Y-m-01')), 'end_date' => request('end_date', date('Y-m-d'))]) }}"
                         class="btn btn-danger w-100"
@@ -317,6 +317,7 @@
 
             </div>
         </div>
+
         {{-- 3. DAFTAR TRANSAKSI (DENGAN TOMBOL HAPUS) --}}
 
         {{-- Tampilan Desktop (Tabel) --}}
@@ -338,18 +339,27 @@
                                 <td class="fw-bold text-secondary">{{ $trx->nomor_transaksi }}</td>
                                 <td>{{ $trx->created_at->format('d M Y, H:i') }}</td>
                                 <td>{{ $trx->user->name ?? 'Kasir' }}</td>
-                                <td class="fw-bold text-dark">Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}</td>
+                                <td class="fw-bold text-dark">Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}
+                                </td>
                                 <td>
                                     {{-- UPDATE: TOMBOL AKSI --}}
                                     <div class="d-flex gap-1">
-                                        {{-- Tombol Detail (Bisa dilihat Semua Role) --}}
+
+                                        {{-- 1. TOMBOL PRINT THERMAL (BARU DITAMBAHKAN) --}}
+                                        <a href="{{ route('laporan.struk.thermal', $trx->id) }}" target="_blank"
+                                            class="btn btn-sm btn-light rounded-circle text-dark shadow-sm"
+                                            title="Print Struk Thermal">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+
+                                        {{-- 2. Tombol Detail --}}
                                         <button
                                             class="btn btn-sm btn-light rounded-pill text-primary fw-bold px-3 shadow-sm"
                                             data-bs-toggle="modal" data-bs-target="#modalDetail{{ $trx->id }}">
                                             Detail
                                         </button>
 
-                                        {{-- Tombol Hapus (HANYA ADMIN) --}}
+                                        {{-- 3. Tombol Hapus (HANYA ADMIN) --}}
                                         @if (auth()->user()->role == 'admin')
                                             <form action="{{ route('laporan.destroy', $trx->id) }}" method="POST"
                                                 onsubmit="return confirm('HAPUS TRANSAKSI INI?\n\nStok produk akan dikembalikan otomatis.\nData yang dihapus tidak bisa dikembalikan.');">
@@ -386,14 +396,24 @@
         <div class="d-md-none pb-5">
             <h6 class="fw-bold text-muted mb-3">Riwayat Transaksi</h6>
             @forelse($transaksis as $trx)
+                {{-- Card Transaksi Mobile --}}
                 <div class="trx-card" data-bs-toggle="modal" data-bs-target="#modalDetail{{ $trx->id }}">
                     <div>
                         <h6 class="fw-bold text-dark mb-0">Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}</h6>
                         <small class="text-muted">{{ $trx->nomor_transaksi }} •
                             {{ $trx->created_at->format('H:i') }}</small>
                     </div>
-                    <div class="text-secondary">
-                        <i class="fas fa-chevron-right"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        {{-- Tombol Print Mobile (BARU) --}}
+                        <a href="{{ route('laporan.struk.thermal', $trx->id) }}" target="_blank"
+                            class="btn btn-sm btn-light rounded-circle border text-dark"
+                            onclick="event.stopPropagation();"> {{-- Stop Propagation agar tidak membuka modal --}}
+                            <i class="fas fa-print"></i>
+                        </a>
+
+                        <div class="text-secondary">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
                     </div>
                 </div>
 

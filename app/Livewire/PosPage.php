@@ -16,7 +16,7 @@ class PosPage extends Component
     public $cart = [];
     public $search = '';
     public $kategoriPilihan = 'Semua';
-    public $bayar = ''; // Bisa string (input manual) atau int (tombol)
+    public $bayar = ''; 
 
     // === HASIL HITUNGAN ===
     public $totalBelanja = 0;
@@ -47,16 +47,13 @@ class PosPage extends Component
         ]);
     }
 
-    // --- HELPER PEMBERSIH ANGKA ---
     public function bersihkanAngka($nilai)
     {
         if (empty($nilai)) return 0;
-        // Hapus karakter non-angka, lalu ubah ke integer
         $bersih = preg_replace('/[^0-9]/', '', (string)$nilai);
         return (int) $bersih;
     }
 
-    // --- LOGIKA TOMBOL CEPAT (BARU) ---
     public function setBayar($nominal)
     {
         if ($nominal == 'pas') {
@@ -64,21 +61,21 @@ class PosPage extends Component
         } else {
             $this->bayar = $nominal;
         }
-        
-        // Hitung ulang kembalian setelah nominal diubah
         $this->hitungTotal();
     }
 
-    // --- LOGIKA KERANJANG ---
     public function gantiKategori($nama) 
     {
         $this->kategoriPilihan = $nama; 
         $this->search = ''; 
     }
 
+    // --- LOGIKA KERANJANG & VALIDASI STOK ---
     public function addToCart($id)
     {
         $produk = Produk::find($id);
+        
+        // Cek stok di awal (UI Feedback)
         if (!$produk || $produk->stok <= 0) return session()->flash('error', 'Stok Habis!');
 
         if (isset($this->cart[$id])) {
@@ -106,7 +103,6 @@ class PosPage extends Component
         }
     }
 
-    // --- LOGIKA HITUNG ---
     public function hitungTotal()
     {
         $this->totalBelanja = 0;
@@ -117,7 +113,6 @@ class PosPage extends Component
             $this->totalItem += $item['quantity'];
         }
         
-        // Bersihkan input bayar (karena bisa dari input manual yg ada titik/koma)
         $bayarInt = $this->bersihkanAngka($this->bayar);
         
         if ($bayarInt >= $this->totalBelanja) {
@@ -138,22 +133,24 @@ class PosPage extends Component
         $this->hitungTotal(); 
     }
 
-    // --- PROSES CHECKOUT ---
+    // --- PROSES CHECKOUT (AMAN) ---
     public function store()
     {
+        // [FIX] Validasi Cabang ID: Jangan biarkan transaksi "yatim piatu"
+        if (!Auth::user()->cabang_id) {
+            session()->flash('error', 'Akun Anda tidak terhubung ke Cabang manapun. Hubungi Admin.');
+            return;
+        }
+
         $bayarInt = $this->bersihkanAngka($this->bayar);
-        
-        // Hitung ulang total untuk memastikan data sinkron
         $this->hitungTotal();
         $totalInt = $this->totalBelanja;
 
-        // Validasi
         if (empty($this->cart)) return session()->flash('error', 'Keranjang kosong!');
         
         if ($bayarInt < $totalInt) {
             return session()->flash('error', 
-                "Uang kurang! Total: " . number_format($totalInt, 0,',','.') . 
-                ", Diterima: " . number_format($bayarInt, 0,',','.')
+                "Uang kurang! Total: " . number_format($totalInt, 0,',','.')
             );
         }
 
@@ -161,10 +158,7 @@ class PosPage extends Component
         try {
             $trx = Transaksi::create([
                 'nomor_transaksi' => 'TRX-' . date('ymdHis') . rand(100, 999),
-                
-                // Menggunakan cabang_id dari user login, default 1 jika null
-                'cabang_id' => Auth::user()->cabang_id ?? 1, 
-                
+                'cabang_id' => Auth::user()->cabang_id, // Wajib ID Cabang User
                 'user_id' => Auth::id(),
                 'total_belanja' => $totalInt,
                 'bayar' => $bayarInt,
@@ -172,11 +166,11 @@ class PosPage extends Component
             ]);
 
             foreach ($this->cart as $id => $item) {
+                // [FIX] LockForUpdate: Kunci baris DB saat transaksi agar stok tidak balapan
                 $produk = Produk::where('id', $id)->lockForUpdate()->first();
                 
-                // Cek stok lagi sebelum simpan (mencegah race condition)
                 if (!$produk || $produk->stok < $item['quantity']) {
-                    throw new \Exception("Stok " . ($item['name'] ?? 'Item') . " habis!");
+                    throw new \Exception("Stok " . ($item['name'] ?? 'Item') . " habis saat proses akhir!");
                 }
 
                 TransaksiDetail::create([
@@ -187,21 +181,18 @@ class PosPage extends Component
                     'subtotal' => $item['price'] * $item['quantity'],
                 ]);
                 
-                // Kurangi stok
+                // Kurangi stok produk yang dijual (Paket berkurang Paket)
                 $produk->decrement('stok', $item['quantity']);
             }
 
             DB::commit();
 
-            // Reset Halaman
             session()->forget('cart');
             $this->cart = [];
             $this->bayar = '';
             $this->hitungTotal();
             
             session()->flash('success', 'Transaksi Berhasil!');
-            
-            // Trigger event ke Frontend untuk menutup modal/offcanvas
             $this->dispatch('transaksi-berhasil'); 
 
         } catch (\Exception $e) {

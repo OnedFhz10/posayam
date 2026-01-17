@@ -42,12 +42,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/transaksi', PosPage::class)->name('transaksi.index');
     });
 
-    // --- LAPORAN (SEMUA BISA LIHAT) ---
-    // Admin lihat semua, Kasir lihat punya sendiri (difilter di Controller)
+   // --- LAPORAN (SEMUA BISA LIHAT) ---
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/', [LaporanController::class, 'index'])->name('index');
         Route::get('/export-pdf', [LaporanController::class, 'exportPdf'])->name('export_pdf');
-        
+
+       // Di dalam group middleware auth
+    Route::get('/struk-thermal/{id}', [App\Http\Controllers\LaporanController::class, 'cetakStrukThermal'])->name('struk.thermal');
+
         // PENTING: Hanya Admin yang boleh HAPUS data!
         Route::delete('/{id}', [LaporanController::class, 'destroy'])
             ->middleware('role:admin') 

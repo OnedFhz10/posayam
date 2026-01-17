@@ -177,7 +177,7 @@
             border: 1px solid var(--teal-dark);
         }
 
-        /* Mobile Bottom Bar (NEW) */
+        /* Mobile Bottom Bar */
         .mobile-bottom-bar {
             position: fixed;
             bottom: 0;
@@ -198,7 +198,7 @@
         }
     </style>
 
-    {{-- ALERT --}}
+    {{-- ALERT (PENTING: Menampilkan error jika item di keranjang ternyata sudah dihapus Admin) --}}
     <div class="fixed-top px-3 mt-3 w-100 d-flex justify-content-center" style="z-index: 2000; pointer-events: none;">
         <div class="col-12 col-md-6">
             @if (session()->has('error'))
@@ -250,6 +250,7 @@
             {{-- KOLOM KIRI: DAFTAR PRODUK --}}
             <div class="col-12 col-md-8">
                 <div class="row g-2">
+                    {{-- Loop Produk (Otomatis menyembunyikan Soft Deleted Items karena difilter di Controller) --}}
                     @forelse($produks as $produk)
                         <div class="col-6 col-md-4 col-lg-3" wire:key="produk-{{ $produk->id }}">
                             <div class="pos-card p-3 d-flex flex-column align-items-center justify-content-center text-center position-relative"
@@ -289,7 +290,6 @@
                         </div>
                     @endforelse
                 </div>
-                {{-- Spacer agar konten terakhir tidak tertutup bottom bar --}}
                 <div class="mobile-bottom-spacer"></div>
             </div>
 
@@ -303,9 +303,10 @@
 
                     <div class="flex-grow-1 overflow-auto p-3" style="max-height: 400px;">
                         @if (count($cart) > 0)
+                            {{-- PENYESUAIAN: Tambahkan wire:key agar render stabil saat hapus item --}}
                             @foreach ($cart as $id => $item)
-                                <div
-                                    class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-dashed">
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-dashed"
+                                    wire:key="cart-desktop-{{ $id }}">
                                     <div class="text-truncate pe-2" style="max-width: 60%;">
                                         <h6 class="mb-0 fw-bold small text-truncate">{{ $item['name'] }}</h6>
                                         <small class="text-muted">Rp
@@ -356,9 +357,14 @@
                             </div>
                         @endif
 
-                        <button wire:click="store" class="btn-checkout w-100"
-                            {{ count($cart) == 0 ? 'disabled' : '' }}>
-                            <i class="fas fa-print me-2"></i> BAYAR SEKARANG
+                        {{-- Loading Indicator pada Tombol Bayar --}}
+                        <button wire:click="store" wire:loading.attr="disabled" class="btn btn-primary w-100 py-3">
+                            <span wire:loading.remove target="store">
+                                BAYAR SEKARANG (Rp {{ number_format($totalBelanja) }})
+                            </span>
+                            <span wire:loading target="store">
+                                <i class="fas fa-spinner fa-spin"></i> Memproses...
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -376,7 +382,6 @@
                     <small class="text-muted">{{ $totalItem }} Item</small>
                 </div>
 
-                {{-- Tombol Bayar Langsung --}}
                 <button class="btn btn-checkout rounded-pill d-flex align-items-center gap-2"
                     data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart">
                     <span>Bayar</span>
@@ -386,7 +391,7 @@
         </div>
     @endif
 
-    {{-- MOBILE CART OFFCANVAS (FORM PEMBAYARAN) --}}
+    {{-- MOBILE CART OFFCANVAS --}}
     <div wire:ignore.self class="offcanvas offcanvas-bottom rounded-top-4 d-md-none" tabindex="-1"
         id="offcanvasCart" style="height: 85vh;">
         <div class="offcanvas-header border-bottom">
@@ -395,11 +400,11 @@
         </div>
         <div class="offcanvas-body pb-5 d-flex flex-column">
 
-            {{-- List Item Mobile --}}
             <div class="flex-grow-1 overflow-auto mb-3">
                 @foreach ($cart as $id => $item)
-                    <div
-                        class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-dashed">
+                    {{-- PENYESUAIAN: Tambahkan wire:key di list mobile juga --}}
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-dashed"
+                        wire:key="cart-mobile-{{ $id }}">
                         <div>
                             <h6 class="mb-0 fw-bold">{{ $item['name'] }}</h6>
                             <small class="text-muted">Rp {{ number_format($item['price'], 0, ',', '.') }}</small>
@@ -415,21 +420,18 @@
                 @endforeach
             </div>
 
-            {{-- Form Input Uang Mobile --}}
             <div class="bg-light p-3 rounded-4">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="fw-bold text-muted">Total</span>
                     <span class="fw-bold fs-5 text-dark">Rp {{ number_format($totalBelanja, 0, ',', '.') }}</span>
                 </div>
 
-                {{-- Input Manual --}}
                 <div class="input-group mb-3">
                     <span class="input-group-text border-0 bg-white ps-3">Rp</span>
                     <input type="number" wire:model.live.debounce.500ms="bayar"
                         class="form-control border-0 bg-white fw-bold text-end" placeholder="0">
                 </div>
 
-                {{-- Tombol Cepat (Uang Pas, 50k, 100k) --}}
                 <div class="d-flex gap-2 justify-content-between mb-3">
                     <button wire:click="setBayar('pas')" class="btn-money btn-money-pas text-center">Uang Pas</button>
                     <button wire:click="setBayar(50000)" class="btn-money text-center">50k</button>
@@ -451,7 +453,6 @@
         </div>
     </div>
 
-    {{-- Script Tutup Offcanvas --}}
     <script>
         document.addEventListener('livewire:initialized', () => {
             @this.on('transaksi-berhasil', (event) => {

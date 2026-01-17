@@ -9,11 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+   public function up(): void
 {
-    Schema::table('produks', function (Blueprint $table) {
-        $table->string('gambar')->nullable()->after('kategori');
-    });
+    // Cek dulu, kalau kolom 'gambar' BELUM ada, baru buat.
+    if (!Schema::hasColumn('produks', 'gambar')) {
+        Schema::table('produks', function (Blueprint $table) {
+            $table->string('gambar')->nullable()->after('kategori');
+        });
+    }
 }
 
 public function down()
