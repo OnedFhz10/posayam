@@ -22,22 +22,31 @@ class LaporanController extends Controller
 
     public function exportPdf(Request $request)
     {
-        // 1. VALIDASI WAJIB: Harus ada tanggal
+        // 1. VALIDASI: Pastikan user memilih tanggal agar laporan tidak terlalu besar
         $request->validate([
             'start_date' => 'required|date',
             'end_date'   => 'required|date|after_or_equal:start_date',
         ], [
-            'start_date.required' => 'Silakan pilih Tanggal Awal dulu untuk mencetak PDF.',
-            'end_date.required'   => 'Silakan pilih Tanggal Akhir dulu untuk mencetak PDF.',
-            'end_date.after_or_equal' => 'Tanggal Akhir tidak boleh kurang dari Tanggal Awal.'
+            'start_date.required' => 'Pilih Tanggal Awal dulu.',
+            'end_date.required'   => 'Pilih Tanggal Akhir dulu.',
         ]);
 
-        // 2. Ambil Data
+        // 2. AMBIL DATA (Gunakan fungsi filter yang sama dengan index)
         $data = $this->getFilteredData($request);
+        
+        // Tambahkan info toko/cabang untuk judul laporan
+        $user = Auth::user();
+        $cabang = $user->cabang ? $user->cabang->nama : 'Semua Cabang';
+        $data['nama_cabang'] = $cabang;
+        $data['dicetak_oleh'] = $user->name;
 
-        // 3. Load View & Download
+        // 3. GENERATE PDF
         $pdf = PDF::loadView('laporan.pdf', $data);
-        return $pdf->download('laporan-transaksi-' . date('YmdHis') . '.pdf');
+        
+        // Set ukuran kertas struk (opsional) atau A4
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->download('Laporan_Harian_' . date('Y-m-d_H-i') . '.pdf');
     }
 
     public function destroy($id)
@@ -69,8 +78,11 @@ class LaporanController extends Controller
         // 1. Query Dasar Transaksi
         $query = Transaksi::with(['user', 'details.produk']); 
 
+        // LOGIKA FILTER ROLE (Disesuaikan):
+        // Jika ADMIN: Bisa melihat semua data (tidak ada filter where).
+        // Jika KASIR: Hanya melihat data di CABANG tempat dia bekerja.
         if ($user->role !== 'admin') { 
-            $query->where('user_id', $user->id);
+            $query->where('cabang_id', $user->cabang_id);
         }
 
         $startDate = $request->input('start_date', date('Y-m-01'));
@@ -100,7 +112,7 @@ class LaporanController extends Controller
                 'Ayam Bakar' => 1, 
                 'Nasi' => 1
             ],
-            'Paket Ayam Chiken' => [ // Sesuaikan typo jika ada di DB (misal: Chicken/Chiken)
+            'Paket Ayam Chiken' => [ 
                 'Ayam Chicken' => 1, 
                 'Nasi' => 1
             ],

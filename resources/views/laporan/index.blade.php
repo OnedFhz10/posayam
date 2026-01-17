@@ -170,18 +170,29 @@
 
             {{-- Form Filter Tanggal --}}
             <form action="{{ route('laporan.index') }}" method="GET" class="row g-2 align-items-center mb-2">
-                <div class="col-6 col-md-4">
+                <div class="col-6 col-md-3">
                     <input type="date" name="start_date" class="form-control form-control-pill"
                         value="{{ request('start_date', date('Y-m-01')) }}">
                 </div>
-                <div class="col-6 col-md-4">
+                <div class="col-6 col-md-3">
                     <input type="date" name="end_date" class="form-control form-control-pill"
                         value="{{ request('end_date', date('Y-m-d')) }}">
                 </div>
-                <div class="col-12 col-md-2">
+
+                {{-- Tombol Filter --}}
+                <div class="col-6 col-md-3">
                     <button type="submit" class="btn btn-filter w-100">
                         <i class="fas fa-filter me-2"></i> Filter
                     </button>
+                </div>
+
+                {{-- TOMBOL EXPORT PDF (BARU) --}}
+                <div class="col-6 col-md-3">
+                    <a href="{{ route('laporan.export_pdf', ['start_date' => request('start_date', date('Y-m-01')), 'end_date' => request('end_date', date('Y-m-d'))]) }}"
+                        class="btn btn-danger w-100"
+                        style="border-radius: 50px; font-weight: 600; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);">
+                        <i class="fas fa-file-pdf me-2"></i> PDF
+                    </a>
                 </div>
             </form>
         </div>
@@ -215,7 +226,7 @@
             </div>
         </div>
 
-        {{-- 2.5. MENU TERLARIS (BARU: SUDAH MENGGUNAKAN LOGIKA BREAKDOWN) --}}
+        {{-- 2.5. MENU TERLARIS --}}
         <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
             <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
                 <h5 class="fw-bold text-dark mb-0">
@@ -329,26 +340,28 @@
                                 <td>{{ $trx->user->name ?? 'Kasir' }}</td>
                                 <td class="fw-bold text-dark">Rp {{ number_format($trx->total_belanja, 0, ',', '.') }}</td>
                                 <td>
-                                    {{-- UPDATE: TOMBOL AKSI LENGKAP --}}
+                                    {{-- UPDATE: TOMBOL AKSI --}}
                                     <div class="d-flex gap-1">
-                                        {{-- Tombol Detail --}}
+                                        {{-- Tombol Detail (Bisa dilihat Semua Role) --}}
                                         <button
                                             class="btn btn-sm btn-light rounded-pill text-primary fw-bold px-3 shadow-sm"
                                             data-bs-toggle="modal" data-bs-target="#modalDetail{{ $trx->id }}">
                                             Detail
                                         </button>
 
-                                        {{-- Tombol Hapus (Form) --}}
-                                        <form action="{{ route('laporan.destroy', $trx->id) }}" method="POST"
-                                            onsubmit="return confirm('HAPUS TRANSAKSI INI?\n\nStok produk akan dikembalikan otomatis.\nData yang dihapus tidak bisa dikembalikan.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="btn btn-sm btn-light rounded-circle text-danger shadow-sm"
-                                                title="Hapus Laporan">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        {{-- Tombol Hapus (HANYA ADMIN) --}}
+                                        @if (auth()->user()->role == 'admin')
+                                            <form action="{{ route('laporan.destroy', $trx->id) }}" method="POST"
+                                                onsubmit="return confirm('HAPUS TRANSAKSI INI?\n\nStok produk akan dikembalikan otomatis.\nData yang dihapus tidak bisa dikembalikan.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="btn btn-sm btn-light rounded-circle text-danger shadow-sm"
+                                                    title="Hapus Laporan">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

@@ -153,8 +153,6 @@
             padding-bottom: 90px;
         }
 
-        /* Jarak untuk navbar bawah */
-
         /* Layar Besar (Desktop >= 768px) */
         @media (min-width: 768px) {
             .bottom-navbar {
@@ -188,34 +186,50 @@
                 </div>
 
                 <div class="sidebar-menu flex-grow-1">
+                    {{-- 1. DASHBOARD (Semua Bisa Akses) --}}
                     <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard*') ? 'active' : '' }}">
                         <i class="fas fa-home fa-fw"></i> Dashboard
                     </a>
 
-                    <a href="{{ route('transaksi.index') }}" class="{{ request()->is('transaksi*') ? 'active' : '' }}">
-                        <i class="fas fa-cash-register fa-fw"></i> Menu Kasir
-                    </a>
+                    {{-- 2. KASIR (HANYA KASIR) --}}
+                    @if (auth()->user()->role == 'kasir')
+                        <a href="{{ route('transaksi.index') }}" class="{{ request()->is('transaksi*') ? 'active' : '' }}">
+                            <i class="fas fa-cash-register fa-fw"></i> Menu Kasir
+                        </a>
+                    @endif
 
-                    <a href="{{ route('produk.index') }}" class="{{ request()->is('produk*') ? 'active' : '' }}">
-                        <i class="fas fa-box fa-fw"></i> Kelola Produk
-                    </a>
-
+                    {{-- 3. LAPORAN (Semua Bisa Akses) --}}
                     <a href="{{ route('laporan.index') }}" class="{{ request()->is('laporan*') ? 'active' : '' }}">
                         <i class="fas fa-chart-pie fa-fw"></i> Laporan
                     </a>
+
+                    {{-- 4. MENU KHUSUS ADMIN --}}
+                    @if (auth()->user()->role == 'admin')
+                        <div class="small fw-bold text-muted mt-3 mb-2 px-3">ADMINISTRATOR</div>
+
+                        <a href="{{ route('produk.index') }}" class="{{ request()->is('produk*') ? 'active' : '' }}">
+                            <i class="fas fa-box fa-fw"></i> Kelola Produk
+                        </a>
+
+                        <a href="{{ route('users.index') }}" class="{{ request()->is('users*') ? 'active' : '' }}">
+                            <i class="fas fa-users-cog fa-fw"></i> Kelola Karyawan
+                        </a>
+                    @endif
                 </div>
 
+                {{-- Logout Button di Sidebar Bawah --}}
                 <div class="sidebar-menu border-top pt-3">
-                    {{-- Profil / Logout --}}
-                    <a href="{{ Route::has('profil.index') ? route('profil.index') : '#' }}"
-                        class="{{ request()->is('profil*') ? 'active' : '' }}">
-                        <i class="fas fa-user-circle fa-fw"></i> Akun Saya
-                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <a href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
+                            <i class="fas fa-sign-out-alt fa-fw"></i> Logout
+                        </a>
+                    </form>
                 </div>
             </div>
         @endauth
 
-        {{-- B. KONTEN UTAMA --}}
+        {{-- B. KONTEN UTAMA (DILUAR SIDEBAR) --}}
         <main>
             {{ $slot ?? '' }}
             @yield('content')
@@ -228,25 +242,37 @@
                     class="nav-item-mobile {{ request()->is('dashboard*') ? 'active' : '' }}">
                     <i class="fas fa-home"></i> <span>Home</span>
                 </a>
-                <a href="{{ route('produk.index') }}"
-                    class="nav-item-mobile {{ request()->is('produk*') ? 'active' : '' }}">
-                    <i class="fas fa-box"></i> <span>Produk</span>
-                </a>
-                <a href="{{ route('transaksi.index') }}" class="nav-item-center">
-                    <div class="circle"><i class="fas fa-cash-register fa-lg"></i></div>
-                    <span class="small fw-bold text-dark mt-1 d-block" style="font-size: 0.7rem;">Kasir</span>
-                </a>
+
+                {{-- HANYA ADMIN yang lihat tombol Produk di HP --}}
+                @if (auth()->user()->role == 'admin')
+                    <a href="{{ route('produk.index') }}"
+                        class="nav-item-mobile {{ request()->is('produk*') ? 'active' : '' }}">
+                        <i class="fas fa-box"></i> <span>Produk</span>
+                    </a>
+                @endif
+
+                {{-- HANYA KASIR YANG LIHAT TOMBOL POS TENGAH --}}
+                @if (auth()->user()->role == 'kasir')
+                    <a href="{{ route('transaksi.index') }}" class="nav-item-center">
+                        <div class="circle"><i class="fas fa-cash-register fa-lg"></i></div>
+                        <span class="small fw-bold text-dark mt-1 d-block" style="font-size: 0.7rem;">Kasir</span>
+                    </a>
+                @endif
+
+                {{-- LAPORAN --}}
                 <a href="{{ route('laporan.index') }}"
                     class="nav-item-mobile {{ request()->is('laporan*') ? 'active' : '' }}">
                     <i class="fas fa-chart-pie"></i> <span>Laporan</span>
                 </a>
+
                 <a href="{{ Route::has('profil.index') ? route('profil.index') : '#' }}"
                     class="nav-item-mobile {{ request()->is('profil*') ? 'active' : '' }}">
                     <i class="fas fa-user"></i> <span>Profil</span>
                 </a>
             </div>
         @endauth
-    </div>
+
+    </div> {{-- Penutup App Div --}}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @livewireScripts

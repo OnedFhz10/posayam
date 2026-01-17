@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use App\Livewire\PosPage; 
 
 /*
@@ -24,27 +25,40 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.action');
 });
 
-// Route User Login
+// Route User Login (Semua yang login bisa akses ini)
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::resource('produk', ProdukController::class);
+    
+    // PROFIL (Boleh Admin & Kasir)
+    Route::prefix('profil')->name('profil.')->group(function () {
+        Route::get('/', [ProfileController::class, 'index'])->name('index');
+        Route::put('/', [ProfileController::class, 'update'])->name('update');
+    });
 
-    // --- POS SYSTEM (LIVEWIRE) ---
-    Route::get('/transaksi', PosPage::class)->name('transaksi.index');
+    // --- KHUSUS KASIR (POS SYSTEM) ---
+    // Admin DILARANG masuk sini agar fokus manajemen
+    Route::middleware('role:kasir')->group(function () {
+        Route::get('/transaksi', PosPage::class)->name('transaksi.index');
+    });
 
-    // --- LAPORAN ---
+    // --- LAPORAN (SEMUA BISA LIHAT) ---
+    // Admin lihat semua, Kasir lihat punya sendiri (difilter di Controller)
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/', [LaporanController::class, 'index'])->name('index');
         Route::get('/export-pdf', [LaporanController::class, 'exportPdf'])->name('export_pdf');
         
-        // Route Hapus
-        Route::delete('/{id}', [LaporanController::class, 'destroy'])->name('destroy');
+        // PENTING: Hanya Admin yang boleh HAPUS data!
+        Route::delete('/{id}', [LaporanController::class, 'destroy'])
+            ->middleware('role:admin') 
+            ->name('destroy');
     });
 
-    // --- PROFIL ---
-    Route::prefix('profil')->name('profil.')->group(function () {
-        Route::get('/', [ProfileController::class, 'index'])->name('index');
-        Route::put('/', [ProfileController::class, 'update'])->name('update');
+    // --- KHUSUS ADMIN (Owner) ---
+    Route::middleware('role:admin')->group(function () {
+        // Kelola Produk
+        Route::resource('produk', ProdukController::class);
+        // Manajemen User
+        Route::resource('users', UserController::class);
     });
 });
